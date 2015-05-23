@@ -1,52 +1,46 @@
 import MySQLdb
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
-from contextlib import closing
 
 # some configuration
 USERNAME = 'admin'
 PASSWORD = 'default'
+SECRET_KEY = 't3rt3r06'
 
 # create our little application
 app = Flask(__name__)
 app.config.from_object(__name__)
 
 def connect_db():
-	return MySQLdb.connect(host='localhost', user='root', passwd='t3rt3r06', db='flaskr', debug=True)
+	return MySQLdb.connect(host='localhost', user='root', passwd='t3rt3r06', db='flaskr')
 
 # self explanatory requests
 @app.before_request
 def before_request():
-	g.db = connect_db()
+	g.connect = connect_db()
+	g.cur = g.connect.cursor()
 
 @app.teardown_request
 def teardown_request(exception):
-	db = getattr(g, 'db', None)
+	db = getattr(g, 'connect', None)
 	if db is not None:
 		db.close()
-
-# initialize database
-def init_db():
-	with closing(connect_db()) as db:
-		with app.open_resource('schema.sql', mode='r') as f:
-			db.cursor().executescript(f.read())
-		db.commit()
 
 # index page, show all entries
 @app.route('/')
 def show_entries():
-	cur = g.db.execute('SELECT title, `text` FROM entries ORDER BY id DESC')
-	entries = cur.fetchall()
+	g.cur.execute('SELECT title, `text` FROM entries ORDER BY id DESC')
+	entries = g.cur.fetchall()
 	return render_template('show_entries.html', entries=entries)
 
 # adding entries
 @app.route('/add', methods=['POST'])
 def add_entry():
 	if not session.get('logged_in'):
-		abort(401)	
+		abort(401)
 	# insert new entry
-	g.db.execute('INSERT INTO entries (title, text) VALUES (?, ?)', [request.form['title'], request.form['text']])
-	# commit new entry
-	g.db.commit()
+	g.cur.execute('INSERT INTO entries (title, `text`) VALUES (%s, %s)', (request.form['title'], request.form['text']))
+	# commit
+	g.connect.commit()
 	# flash message for success
 	flash('New entry was successfully posted')
 	# redirect to the entries
@@ -77,4 +71,4 @@ def logout():
 
 # run this file itself
 if __name__ == '__main__':
-	app.run()
+	app.run(debug=True)

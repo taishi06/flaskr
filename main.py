@@ -64,6 +64,18 @@ def edit_entry(entry_id):
 		return redirect(url_for('edit_entry', entry_id=entry_id))
 	return render_template('edit_entry.html', entry=entry)
 
+# deliting entries
+@app.route('/delete/<int:entry_id>')
+def delete_entry(entry_id):
+	# prepare statement
+	g.cur.execute('DELETE FROM entries WHERE id = %d' % entry_id)
+	# delete it
+	g.connect.commit()
+	# flash
+	flash('Entry has been successfully deleted.')
+	# go back to the entry
+	return redirect(url_for('show_entries'))
+
 # login, same page for the validation process
 @app.route('/login', methods=['GET', 'POST'])
 def login():

@@ -8,10 +8,11 @@ SECRET_KEY = 't3rt3r06'
 
 # create our little application
 app = Flask(__name__)
+app.config['DATABASE'] = 'flaskr'
 app.config.from_object(__name__)
 
 def connect_db():
-	return MySQLdb.connect(host='localhost', user='root', passwd='t3rt3r06', db='flaskr')
+	return MySQLdb.connect(host='localhost', user='root', passwd='t3rt3r06', db=app.config['DATABASE'])
 
 # self explanatory requests
 @app.before_request

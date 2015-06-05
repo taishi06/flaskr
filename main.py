@@ -1,5 +1,6 @@
-import MySQLdb
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
+
+from db_connect import connect
 
 # some configuration
 USERNAME = 'admin'
@@ -11,13 +12,10 @@ app = Flask(__name__)
 app.config['DATABASE'] = 'flaskr'
 app.config.from_object(__name__)
 
-def connect_db():
-	return MySQLdb.connect(host='localhost', user='root', passwd='t3rt3r06', db=app.config['DATABASE'])
-
 # self explanatory requests
 @app.before_request
 def before_request():
-	g.connect = connect_db()
+	g.connect = connect(app.config['DATABASE'])
 	g.cur = g.connect.cursor()
 
 @app.teardown_request
